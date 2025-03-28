@@ -1,9 +1,7 @@
-name: Assert version is incremented
+name: Assert version is incremented for repositories containing a package.xml file with a "version" tag
 
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   check-version:
