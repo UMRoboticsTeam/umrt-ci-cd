@@ -1,9 +1,7 @@
-name: Assert version is incremented
+name: Assert version is incremented in a repo containing a version file
 
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   check-version:
