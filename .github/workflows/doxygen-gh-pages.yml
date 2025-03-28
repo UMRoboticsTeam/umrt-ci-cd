@@ -1,9 +1,7 @@
 name: Deploy Doxygen to Github Pages
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   build:
