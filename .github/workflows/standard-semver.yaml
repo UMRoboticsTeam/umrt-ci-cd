@@ -2,6 +2,9 @@ name: Assert version is incremented in a repo containing a version file
 
 on:
   workflow_call:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   check-version:
