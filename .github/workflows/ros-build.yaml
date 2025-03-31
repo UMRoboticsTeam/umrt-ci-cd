@@ -1,0 +1,199 @@
+name: Build a Colcon-based ROS2 application and publish artifacts to a Git repository
+
+on:
+  workflow_call:
+    inputs:
+      container_registry:
+        description: "Docker container registry to authenticate with"
+        required: true
+        type: string
+        default: "ghcr.io"
+
+      build_image:
+        description: "Docker image to build the repository in"
+        required: true
+        type: string
+
+      publish_image:
+        description: "Docker image to use for publishing"
+        required: true
+        type: string
+
+      publish_repo:
+        description: "Repository to publish into"
+        required: true
+        type: string
+
+      artifact_author_name:
+        description: "Git author name to use for build artifacts"
+        default: "University of Manitoba Robotics Team Build Server"
+        type: string
+
+      artifact_author_email:
+        description: "Git author email to use for build artifacts"
+        default: "exec.umrt@gmail.com"
+        type: string
+
+    secrets:
+      APT_SIGNING_PUBKEY:
+        description: "Public key of the apt server build artifacts should be sent to"
+        required: true
+
+      APT_SIGNING_KEY:
+        description: "GPG key for signing build artifacts"
+        required: true
+
+      APT_DEPLOY_KEY:
+        description: "SSH key used to upload build artifacts to the artifact repository"
+        required: true
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch:
+          - amd64
+          - arm64
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: read
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          path: ./src
+          submodules: 'true'
+
+      - name: Log in to the container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ inputs.container_registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build and package in potentially emulated Docker container
+        run: |
+          docker run \
+            --rm \
+            -v $(pwd):/${{ github.workspace }} \
+            -w ${{ github.workspace }} \
+            --platform linux/${{ matrix.arch }} \
+            ${{ inputs.build_image }} \
+            bash -c "\
+            cd src && \
+            source /opt/ros/humble/setup.sh && \
+            rosdep update && \
+            bloom-generate rosdebian && \
+            fakeroot debian/rules binary \
+            "
+
+      - name: Encrypt deb
+        working-directory: .
+        run: |
+          echo -n "$APT_SIGNING_PUBKEY" | gpg --import
+          gpg --encrypt --recipient "${{ inputs.artifact_author_email }}" --trust-model tofu --use-embedded-filename *.deb
+        env:
+          APT_SIGNING_PUBKEY: ${{ secrets.APT_SIGNING_PUBKEY }}
+
+      - name: Pass encrypted deb to publishing container
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-deb-${{ matrix.arch }}
+          path: "*.deb.gpg"
+
+  publish:
+    needs: build
+
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.publish_image }}
+
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Download debs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: encrypted-deb-*
+          path: ./debs
+          merge-multiple: true
+
+      - name: Checkout apt repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.publish_repo }}
+          path: ./apt
+          ref: 'main'
+          # Note that this is persisted in the local Git config until the post-job task
+          persist-credentials: true
+          ssh-key: ${{ secrets.APT_DEPLOY_KEY }}
+
+      - name: Load signing key and decrypt debs
+        working-directory: ./debs
+        run: |
+          echo -n "$APT_SIGNING_KEY" | gpg --import
+          gpg --decrypt --multifile --use-embedded-filename *.deb.gpg
+          rm *.deb.gpg
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+
+      - name: Checkout source for tagging
+        uses: actions/checkout@v4
+        with:
+          path: ./src
+
+      - name: Parse version number
+        working-directory: ./src
+        # Save version number into an environment variable for use in different steps
+        run: echo "PKG_VERSION=$(xml_grep --text_only 'package/version' package.xml)" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Publish debians
+        working-directory: ./apt
+        run: reprepro --section arm --component main --priority 0 includedeb humble ../debs/*.deb
+
+      - name: Push apt repo
+        working-directory: ./apt
+        shell: bash
+        run: |
+          git config user.name '${{ inputs.artifact_author_name }}'
+          git config user.email '${{ inputs.artifact_author_email }}'
+          git config user.signingkey "$(gpg --list-signatures $(git config --get user.email) | sed -n '/^\s/s/\s*//p')"
+          git add --all
+          git commit -S -m "Uploaded version ${{ env.PKG_VERSION }} of ${{ github.repository }}"
+          git push origin
+
+      - name: Create version tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const {PKG_VERSION} = process.env   
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/v${PKG_VERSION}`,
+              sha: context.sha
+            })
+
+  cleanup:
+    # Always run after all these jobs, regardless of if they succeed
+    if: ${{ always() }}
+    needs:
+      - build
+      - publish
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete amd64 deb artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            encrypted-deb-*
