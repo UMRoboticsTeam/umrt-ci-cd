@@ -1,7 +1,7 @@
 name: Tag each PR's merge commit with the version number
 
 on:
-  pull_request:
+  push:
     branches:
       - main
 
