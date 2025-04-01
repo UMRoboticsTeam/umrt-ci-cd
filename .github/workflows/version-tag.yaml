@@ -1,0 +1,38 @@
+name: Tag each PR's merge commit with the version number
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout pr branch
+        uses: actions/checkout@v4
+        with:
+          path: ./pr
+
+      - name: Extract version number
+        working-directory: .
+        id: extract-versions
+        run: |
+          echo "PKG_VERSION=$(cat pr/version)" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Create version tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const {PKG_VERSION} = process.env   
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/v${PKG_VERSION}`,
+              sha: context.sha
+            })
