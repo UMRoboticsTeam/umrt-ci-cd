@@ -86,14 +86,14 @@ jobs:
             -w ${{ github.workspace }} \
             --platform linux/${{ matrix.arch }} \
             ${{ inputs.build_image }} \
-            bash -c "\
+            bash -c '\
             cd src && \
             source /opt/ros/humble/setup.bash && \
             rosdep update && \
-            sed 's/@version_input@/'$(cat version)/ package.in.xml > package.xml && \
+            sed "s/@version_input@/$(cat version)/" package.in.xml > package.xml && \
             bloom-generate rosdebian && \
             fakeroot debian/rules binary \
-            "
+            '
 
       - name: Encrypt deb
         working-directory: .
