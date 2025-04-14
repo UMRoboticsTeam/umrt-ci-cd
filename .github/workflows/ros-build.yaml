@@ -76,6 +76,9 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build and package in potentially emulated Docker container
+        # Note that unlike colcon, bloom parses the package.xml before invoking CMake, so we need to fill in
+        # package.in.xml with our version number and write it to package.xml ourselves with sed instead of with CMake...
+        # This could probably be done more elegantly in the future
         run: |
           docker run \
             --rm \
@@ -85,8 +88,9 @@ jobs:
             ${{ inputs.build_image }} \
             bash -c "\
             cd src && \
-            source /opt/ros/humble/setup.sh && \
+            source /opt/ros/humble/setup.bash && \
             rosdep update && \
+            sed 's/@version_input@/'$(cat version)/ package.in.xml > package.xml && \
             bloom-generate rosdebian && \
             fakeroot debian/rules binary \
             "
