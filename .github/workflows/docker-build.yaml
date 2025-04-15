@@ -147,5 +147,11 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
+      # To use the image ID, we need to remove the "sha256:" prefix from the front
+      - name: Prepare image ID
+        id: image-id-prep
+        run: |
+          echo "imageid=${{ steps.push.outputs.imageid }}" | sed "s/sha256://" >> "$GITHUB_OUTPUT"
+
     outputs:
-      image_id: ${{ steps.push.outputs.imageid }}
+      image_id: ${{ steps.image-id-prep.outputs.imageid }}
