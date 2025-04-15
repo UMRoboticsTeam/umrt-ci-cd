@@ -48,6 +48,11 @@ on:
         description: "Any secrets to be passed to the Docker build action"
         default: ""
 
+    outputs:
+      image_id:
+        description: "Image ID of the built image"
+        value: ${{ jobs.build-and-push-image.outputs.image_id }}
+
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
@@ -140,3 +145,6 @@ jobs:
           subject-name: ${{ inputs.container_registry }}/${{ inputs.image_name}}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+    outputs:
+      image_id: ${{ steps.push.outputs.imageid }}
