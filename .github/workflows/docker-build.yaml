@@ -46,7 +46,7 @@ on:
 
       DOCKER_BUILD_SECRETS:
         description: "Any secrets to be passed to the Docker build action"
-        default: ""
+        required: false
 
     outputs:
       image_id:
