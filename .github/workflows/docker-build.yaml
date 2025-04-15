@@ -25,6 +25,7 @@ on:
 
       build_args:
         description: "Any build arguments to be passed to the Docker build action"
+        type: string
         default: ""
 
     secrets:
