@@ -23,6 +23,10 @@ on:
         type: boolean
         default: true
 
+      build_args:
+        description: "Any build arguments to be passed to the Docker build action"
+        default: ""
+
     secrets:
       APT_SERVER_NAME:
         description: "Domain name of the apt server to authenticate with"
@@ -120,6 +124,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ inputs.build_args }}
           secrets: |
             "apt_pubkey=${{ secrets.APT_SIGNING_PUBKEY }}"
             "apt_auth_conf=
