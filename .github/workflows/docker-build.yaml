@@ -151,7 +151,7 @@ jobs:
       - name: Prepare image tag
         id: image-tag-prep
         run: |
-          echo "image_tag=$(echo {{ inputs.container_registry }}/${{ inputs.image_name }} | tr '[:upper:]' '[:lower:]')@${{ steps.push.outputs.imageid }}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$(echo ${{ inputs.container_registry }}/${{ inputs.image_name }} | tr '[:upper:]' '[:lower:]')@${{ steps.push.outputs.imageid }}" >> "$GITHUB_OUTPUT"
 
     outputs:
       image_tag: ${{ steps.image-tag-prep.outputs.image_tag }}
