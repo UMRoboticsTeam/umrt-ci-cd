@@ -50,9 +50,9 @@ on:
         required: false
 
     outputs:
-      image_id:
-        description: "Image ID of the built image"
-        value: ${{ jobs.build-and-push-image.outputs.image_id }}
+      image_tag:
+        description: "Tag of the built image"
+        value: ${{ jobs.build-and-push-image.outputs.image_tag }}
 
 jobs:
   build-and-push-image:
@@ -148,10 +148,10 @@ jobs:
           push-to-registry: true
 
       # To use the image ID, we need to remove the "sha256:" prefix from the front
-      - name: Prepare image ID
-        id: image-id-prep
+      - name: Prepare image tag
+        id: image-tag-prep
         run: |
-          echo "imageid=${{ steps.push.outputs.imageid }}" | sed "s/sha256://" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${{ inputs.container_registry }}/${{ inputs.image_name}}@${{ steps.meta.outputs.imageid }}" >> "$GITHUB_OUTPUT"
 
     outputs:
-      image_id: ${{ steps.image-id-prep.outputs.imageid }}
+      image_tag: ${{ steps.image-tag-prep.outputs.image_tag }}
