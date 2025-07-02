@@ -70,9 +70,6 @@ jobs:
           path: ./src
           submodules: 'true'
 
-      - name: Set working directory
-        run: cd ${{ inputs.working_directory }}
-
       - name: Log in to the container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
@@ -95,7 +92,7 @@ jobs:
             --platform linux/${{ matrix.arch }} \
             ${{ inputs.build_image }} \
             bash -c '\
-            cd src && \
+            cd "src/${{ inputs.working_directory }}" && \
             source /opt/ros/humble/setup.bash && \
             rosdep update && \
             sed "s/@version_input@/$(cat version)/" package.in.xml > package.xml && \
