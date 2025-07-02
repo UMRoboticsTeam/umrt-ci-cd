@@ -148,7 +148,7 @@ jobs:
         run: |
           echo -n "$APT_SIGNING_KEY" | gpg --import
           gpg --decrypt --multifile --use-embedded-filename **/*.deb.gpg
-          rm *.deb.gpg
+          rm **/*.deb.gpg
         env:
           APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
 
