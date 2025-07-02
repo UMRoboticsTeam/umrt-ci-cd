@@ -33,6 +33,11 @@ on:
         default: "exec.umrt@gmail.com"
         type: string
 
+      working_directory:
+        description: "Subdirectory to use as the working directory"
+        default: "."
+        type: string
+
     secrets:
       APT_SIGNING_PUBKEY:
         description: "Public key of the apt server build artifacts should be sent to"
@@ -64,6 +69,9 @@ jobs:
         with:
           path: ./src
           submodules: 'true'
+
+      - name: Set working directory
+        run: cd ${{ inputs.working_directory }}
 
       - name: Log in to the container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
