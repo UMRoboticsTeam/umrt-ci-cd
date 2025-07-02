@@ -101,10 +101,10 @@ jobs:
             '
 
       - name: Encrypt deb
-        working-directory: "src/${{ inputs.working_directory }}"
+        working-directory: .
         run: |
           echo -n "$APT_SIGNING_PUBKEY" | gpg --import
-          gpg --encrypt --recipient "${{ inputs.artifact_author_email }}" --trust-model tofu --use-embedded-filename *.deb
+          gpg --encrypt --recipient "${{ inputs.artifact_author_email }}" --trust-model tofu --use-embedded-filename **/*.deb
         env:
           APT_SIGNING_PUBKEY: ${{ secrets.APT_SIGNING_PUBKEY }}
 
@@ -112,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: encrypted-deb-${{ matrix.arch }}
-          path: "src/${{ inputs.working_directory }}/*.deb.gpg"
+          path: "**/*.deb.gpg"
 
   publish:
     needs: build
