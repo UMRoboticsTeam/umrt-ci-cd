@@ -33,6 +33,11 @@ on:
         default: "exec.umrt@gmail.com"
         type: string
 
+      working_directory:
+        description: "Subdirectory to use as the working directory"
+        default: "."
+        type: string
+
     secrets:
       APT_SIGNING_PUBKEY:
         description: "Public key of the apt server build artifacts should be sent to"
@@ -87,7 +92,7 @@ jobs:
             --platform linux/${{ matrix.arch }} \
             ${{ inputs.build_image }} \
             bash -c '\
-            cd src && \
+            cd "src/${{ inputs.working_directory }}" && \
             source /opt/ros/humble/setup.bash && \
             rosdep update && \
             sed "s/@version_input@/$(cat version)/" package.in.xml > package.xml && \
@@ -99,7 +104,7 @@ jobs:
         working-directory: .
         run: |
           echo -n "$APT_SIGNING_PUBKEY" | gpg --import
-          gpg --encrypt --recipient "${{ inputs.artifact_author_email }}" --trust-model tofu --use-embedded-filename *.deb
+          gpg --encrypt --recipient "${{ inputs.artifact_author_email }}" --trust-model tofu --use-embedded-filename **/*.deb
         env:
           APT_SIGNING_PUBKEY: ${{ secrets.APT_SIGNING_PUBKEY }}
 
@@ -107,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: encrypted-deb-${{ matrix.arch }}
-          path: "*.deb.gpg"
+          path: "**/*.deb.gpg"
 
   publish:
     needs: build
@@ -142,8 +147,8 @@ jobs:
         working-directory: ./debs
         run: |
           echo -n "$APT_SIGNING_KEY" | gpg --import
-          gpg --decrypt --multifile --use-embedded-filename *.deb.gpg
-          rm *.deb.gpg
+          gpg --decrypt --multifile --use-embedded-filename **/*.deb.gpg
+          rm **/*.deb.gpg
         env:
           APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
 
