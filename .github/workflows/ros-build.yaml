@@ -178,7 +178,14 @@ jobs:
           git commit -S -m "Uploaded version ${{ env.PKG_VERSION }} of ${{ github.repository }}"
           git push origin
 
+      - name: Check if version tag already created
+        uses: action-pack/tag-exists@v1
+        id: check-version-tag
+        with:
+          tag: 'v${PKG_VERSION}'
+
       - name: Create version tag
+        if: ${{ steps.check.outputs.exists }}
         uses: actions/github-script@v5
         with:
           script: |
