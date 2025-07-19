@@ -126,7 +126,7 @@ jobs:
       packages: read
 
     concurrency:
-      group: ${{publish_repo}}-lock
+      group: ${{ inputs.publish_repo }}-lock
       cancel-in-progress: false
 
     steps:
