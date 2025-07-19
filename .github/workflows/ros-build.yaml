@@ -125,6 +125,10 @@ jobs:
       contents: write
       packages: read
 
+    concurrency:
+      group: ${{publish_repo}}-lock
+      cancel-in-progress: false
+
     steps:
       - name: Download debs
         uses: actions/download-artifact@v4
