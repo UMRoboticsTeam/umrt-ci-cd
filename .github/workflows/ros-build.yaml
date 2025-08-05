@@ -102,6 +102,7 @@ jobs:
 
       - name: Encrypt deb
         working-directory: .
+        shell: bash
         run: |
           shopt -s globstar
           echo -n "$APT_SIGNING_PUBKEY" | gpg --import
@@ -150,6 +151,7 @@ jobs:
 
       - name: Load signing key and decrypt debs
         working-directory: ./debs
+        shell: bash
         run: |
           shopt -s globstar
           echo -n "$APT_SIGNING_KEY" | gpg --import
@@ -171,6 +173,7 @@ jobs:
 
       - name: Publish debians
         working-directory: ./apt
+        shell: bash
         run: reprepro --section arm --component main --priority 0 includedeb humble ../debs/*.deb
 
       - name: Push apt repo
