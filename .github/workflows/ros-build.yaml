@@ -103,6 +103,7 @@ jobs:
       - name: Encrypt deb
         working-directory: .
         run: |
+          shopt -s globstar
           echo -n "$APT_SIGNING_PUBKEY" | gpg --import
           gpg --encrypt --recipient "${{ inputs.artifact_author_email }}" --trust-model tofu --use-embedded-filename **/*.deb
         env:
@@ -150,6 +151,7 @@ jobs:
       - name: Load signing key and decrypt debs
         working-directory: ./debs
         run: |
+          shopt -s globstar
           echo -n "$APT_SIGNING_KEY" | gpg --import
           gpg --decrypt --multifile --use-embedded-filename **/*.deb.gpg
           rm **/*.deb.gpg
