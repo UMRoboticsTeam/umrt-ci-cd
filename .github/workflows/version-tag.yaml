@@ -1,6 +1,7 @@
 name: Tag each PR's merge commit with the version number
 
 on:
+  workflow_call:
   push:
     branches:
       - main
