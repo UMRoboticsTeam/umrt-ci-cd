@@ -105,6 +105,8 @@ jobs:
         type=ref,event=branch
         type=sha
       push: true
+      sbom: true
+      sign: false
       platforms: linux/amd64,linux/arm64
       runner: |
         default=ubuntu-latest
