@@ -114,6 +114,7 @@ jobs:
         linux/arm64=ubuntu-24.04-arm
       distribute: true
       fail-fast: true
+      artifact-name: random_name_which_doesnt_conflict_with_secrets
       context: .
       file: ./${{ inputs.dockerfile }}
       build-args: |
