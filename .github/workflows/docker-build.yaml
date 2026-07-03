@@ -83,12 +83,12 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: refs/tags/v${{steps.extract-versions.outputs.PKG_VERSION }},
+              ref: `refs/tags/v${{steps.extract-version.outputs.PKG_VERSION }}`,
               sha: context.sha
             })
             
   build-and-push-image:
-    uses: UMRoboticsTeam/github-builder/.github/workflows/build.yml@support-docker-build-secrets
+    uses: UMRoboticsTeam/github-builder/.github/workflows/build.yml@temp-change-certificate-identity
     needs: extract-version
     permissions:
       contents: write
@@ -105,7 +105,8 @@ jobs:
         type=ref,event=branch
         type=sha
       push: true
-      sign: false
+      sign: true
+      set-meta-labels: true
       platforms: linux/amd64,linux/arm64
       runner: |
         default=ubuntu-latest
