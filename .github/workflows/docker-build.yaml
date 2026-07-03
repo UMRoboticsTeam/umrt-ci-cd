@@ -126,8 +126,5 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       build-secrets: |
         "apt_pubkey=${{ secrets.APT_SIGNING_PUBKEY }}"
-        "apt_auth_conf=
-          machine ${{ secrets.APT_SERVER_NAME }}
-          login ${{ secrets.APT_RETRIEVE_USER }} 
-          password ${{ secrets.APT_RETRIEVE_TOKEN }}"
+        "apt_auth_conf=machine ${{ secrets.APT_SERVER_NAME }} login ${{ secrets.APT_RETRIEVE_USER }}  password ${{ secrets.APT_RETRIEVE_TOKEN }}"
         ${{ secrets.DOCKER_BUILD_SECRETS }}
