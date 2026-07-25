@@ -37,6 +37,11 @@ on:
         description: "Subdirectory to use as the working directory"
         default: "."
         type: string
+        
+      push_artifacts:
+        description: "Whether to push artifacts to the publish repository; if set to false the compilation results are discarded"
+        default: true
+        type: boolean
 
     secrets:
       APT_SIGNING_PUBKEY:
@@ -118,6 +123,7 @@ jobs:
 
   publish:
     needs: build
+    if: ${{ inputs.push_artifacts }}
 
     runs-on: ubuntu-latest
     container:
