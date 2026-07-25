@@ -60,10 +60,13 @@ jobs:
   build:
     strategy:
       matrix:
-        arch:
-          - amd64
-          - arm64
-    runs-on: ubuntu-latest
+        target:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            
+    runs-on: ${{ matrix.target.runner }}
 
     permissions:
       packages: read
@@ -82,9 +85,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Build and package in potentially emulated Docker container
         # Note that unlike colcon, bloom parses the package.xml before invoking CMake, so we need to fill in
         # package.in.xml with our version number and write it to package.xml ourselves with sed instead of with CMake...
@@ -94,7 +94,6 @@ jobs:
             --rm \
             -v $(pwd):/${{ github.workspace }} \
             -w ${{ github.workspace }} \
-            --platform linux/${{ matrix.arch }} \
             ${{ inputs.build_image }} \
             bash -c '\
             cd "src/${{ inputs.working_directory }}" && \
@@ -118,7 +117,7 @@ jobs:
       - name: Pass encrypted deb to publishing container
         uses: actions/upload-artifact@v4
         with:
-          name: encrypted-deb-${{ matrix.arch }}
+          name: encrypted-deb-${{ matrix.target.arch }}
           path: "**/*.deb.gpg"
 
   publish:
@@ -222,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Delete amd64 deb artifact
+      - name: Delete deb artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
           name: |
